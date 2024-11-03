@@ -1,7 +1,2 @@
-- 👋 Hi, I’m @Zourryy
-- 👀 I’m interested in python
+![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&duration=2000&pause=1000&color=F70000&background=FFFFFF&width=435&lines=Muhamad+Triyadi;Welcome+to+My+Profile!+👋)
 
-<!---
-Zourryy/Zourryy is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
-You can click the Preview link to take a look at your changes.
---->

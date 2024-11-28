@@ -1,6 +1,3 @@
-![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=14&duration=2000&pause=1000&color=0000FF&background=FFFFFF00&width=435&lines=created+by+Zourry😒;Welcome+to+My+Profile!+👋;Student+of+SMKN+3+KUNINGAN🧐;Have+a+Dream+to+be+a+programer++</>)
-
-
 ## 🌐 Socials:
 [![Discord](https://img.shields.io/badge/Discord-%237289DA.svg?logo=discord&logoColor=white)](https://discord.gg/https://discord.gg/zgVVbcWt) [![Instagram](https://img.shields.io/badge/Instagram-%23E4405F.svg?logo=Instagram&logoColor=white)](https://instagram.com/Vtx_dyy) [![Reddit](https://img.shields.io/badge/Reddit-%23FF4500.svg?logo=Reddit&logoColor=white)](https://reddit.com/user/NVCNX) [![TikTok](https://img.shields.io/badge/TikTok-%23000000.svg?logo=TikTok&logoColor=white)](https://tiktok.com/@@ba_zou_) [![X](https://img.shields.io/badge/X-black.svg?logo=X&logoColor=white)](https://x.com/@dyyzken) 
 

